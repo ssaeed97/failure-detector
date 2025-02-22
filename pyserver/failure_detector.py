@@ -20,6 +20,11 @@ class FailureDetector(swim_pb2_grpc.FailureDetectorServicer):
         self.members = members  # List of nodes' addresses
         self.last_heard = {node: time.time() for node in members}
 
+    def update_membership(self, failed_node):
+        if failed_node in self.members:
+            self.members.remove(failed_node)
+            print(f"Membership updated: removed failed node {failed_node}. New membership: {self.members}")
+    
     def Ping(self, request, context):
         # Server-side logging for Ping RPC
         print(f"Component FailureDetector of Node {self.node_id} runs RPC Ping called by Component FailureDetector of Node {request.sender_id}")
@@ -80,6 +85,8 @@ class FailureDetector(swim_pb2_grpc.FailureDetectorServicer):
                         print(f"Dissemination to Node {member_node_id} failed for node {target}")
                 except grpc.RpcError as e:
                     print(f"Error calling Dissemination service on node {member_node_id}: {e}")
+        # Update local membership list after dissemination.
+        self.update_membership(target)
 
     def monitor_nodes(self):
         while True:
