@@ -118,13 +118,30 @@ python pyserver/failure_detector.py
 ```
 
 * Node 2:
+```
+export NODE_ID=2
+export MEMBERS="localhost:50051,localhost:50052,localhost:50053,localhost:50054,localhost:50055"
+python pyserver/failure_detector.py
+```
 
 * Node 3:
-
+```
+export NODE_ID=3
+export MEMBERS="localhost:50051,localhost:50052,localhost:50053,localhost:50054,localhost:50055"
+python pyserver/failure_detector.py
+```
 * Node 4:
-
+```
+export NODE_ID=4
+export MEMBERS="localhost:50051,localhost:50052,localhost:50053,localhost:50054,localhost:50055"
+python pyserver/failure_detector.py
+```
 * Node 5:
-
+```
+export NODE_ID=5
+export MEMBERS="localhost:50051,localhost:50052,localhost:50053,localhost:50054,localhost:50055"
+python pyserver/failure_detector.py
+```
 
 ## Containerization
 
@@ -143,7 +160,15 @@ Before using Docker Compose, you can create a Docker network and run each contai
     
 3.  For three nodes, run these commands in separate terminals:
     
-    *   `docker run -it --name node1 --network failure-network -p 50051:50051 -e NODE_ID=1 -e MEMBERS="node1:50051,node2:50052,node3:50053" failure-detector`
+    * ```
+    docker run -it --rm \
+  --name node1 \
+  --network failure-network \
+  -e NODE_ID=1 \
+  -e MEMBERS="node1:50051,node2:50052,node3:50053,node4:50054,node5:50055" \
+  -p 50051:50051 -p 50061:50061 \
+  failure-detector
+        ```   
         
     *   `docker run -it --name node2  --network failure-network  -p 50052:50052  -e NODE_ID=2  -e MEMBERS="node1:50051,node2:50052,node3:50053"  failure-detector`
         
