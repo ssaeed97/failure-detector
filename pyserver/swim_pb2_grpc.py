@@ -141,3 +141,120 @@ class FailureDetector(object):
             timeout,
             metadata,
             _registered_method=True)
+
+
+class DisseminationStub(object):
+    """Missing associated documentation comment in .proto file."""
+
+    def __init__(self, channel):
+        """Constructor.
+
+        Args:
+            channel: A grpc.Channel.
+        """
+        self.Disseminate = channel.unary_unary(
+                '/swim.Dissemination/Disseminate',
+                request_serializer=swim__pb2.DisseminationRequest.SerializeToString,
+                response_deserializer=swim__pb2.DisseminationResponse.FromString,
+                _registered_method=True)
+        self.Join = channel.unary_unary(
+                '/swim.Dissemination/Join',
+                request_serializer=swim__pb2.JoinRequest.SerializeToString,
+                response_deserializer=swim__pb2.JoinResponse.FromString,
+                _registered_method=True)
+
+
+class DisseminationServicer(object):
+    """Missing associated documentation comment in .proto file."""
+
+    def Disseminate(self, request, context):
+        """When a failure is detected, this RPC multicasts the info
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def Join(self, request, context):
+        """New node join process
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+
+def add_DisseminationServicer_to_server(servicer, server):
+    rpc_method_handlers = {
+            'Disseminate': grpc.unary_unary_rpc_method_handler(
+                    servicer.Disseminate,
+                    request_deserializer=swim__pb2.DisseminationRequest.FromString,
+                    response_serializer=swim__pb2.DisseminationResponse.SerializeToString,
+            ),
+            'Join': grpc.unary_unary_rpc_method_handler(
+                    servicer.Join,
+                    request_deserializer=swim__pb2.JoinRequest.FromString,
+                    response_serializer=swim__pb2.JoinResponse.SerializeToString,
+            ),
+    }
+    generic_handler = grpc.method_handlers_generic_handler(
+            'swim.Dissemination', rpc_method_handlers)
+    server.add_generic_rpc_handlers((generic_handler,))
+    server.add_registered_method_handlers('swim.Dissemination', rpc_method_handlers)
+
+
+ # This class is part of an EXPERIMENTAL API.
+class Dissemination(object):
+    """Missing associated documentation comment in .proto file."""
+
+    @staticmethod
+    def Disseminate(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/swim.Dissemination/Disseminate',
+            swim__pb2.DisseminationRequest.SerializeToString,
+            swim__pb2.DisseminationResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def Join(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/swim.Dissemination/Join',
+            swim__pb2.JoinRequest.SerializeToString,
+            swim__pb2.JoinResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
