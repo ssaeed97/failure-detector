@@ -1,0 +1,27 @@
+services:
+  node1:
+    build: .
+    container_name: node1
+    environment:
+      - NODE_ID=1
+      - MEMBERS=node1:50051,node2:50052,node3:50053
+    ports:
+      - "50051:50051"
+
+  node2:
+    build: .
+    container_name: node2
+    environment:
+      - NODE_ID=2
+      - MEMBERS=node1:50051,node2:50052,node3:50053
+    ports:
+      - "50052:50052"
+
+  node3:
+    build: .
+    container_name: node3
+    environment:
+      - NODE_ID=3
+      - MEMBERS=node1:50051,node2:50052,node3:50053
+    ports:
+      - "50053:50053"

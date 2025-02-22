@@ -1,6 +1,7 @@
 import grpc
 import time
 import random
+import os
 from concurrent import futures
 import swim_pb2 as swim_pb2
 import swim_pb2_grpc as swim_pb2_grpc
@@ -45,7 +46,6 @@ class FailureDetector(swim_pb2_grpc.FailureDetectorServicer):
                         self.last_heard[target] = time.time()
                 except grpc.RpcError:
                     print(f"Node {target} did not respond, trying indirect probe...")
-                    # Filter out the target from proxies
                     available_proxies = [m for m in self.members if m != target]
                     proxies = random.sample(available_proxies, min(K, len(available_proxies)))
                     for proxy in proxies:
@@ -76,8 +76,24 @@ def serve(node_id, members):
     server.start()
     detector.monitor_nodes()
     server.wait_for_termination()
-
+#Code for Docker
 if __name__ == "__main__":
+    # Read NODE_ID from environment variable if available; otherwise, prompt for input.
+    node_id = os.environ.get("NODE_ID")
+    if not node_id:
+        node_id = input("Enter node ID: ")
+
+    # Read MEMBERS from environment variable; if not provided, default to hardcoded values.
+    members_env = os.environ.get("MEMBERS")
+    if members_env:
+        members = members_env.split(',')
+    else:
+        members = ["node1:50051", "node2:50052", "node3:50053"]
+    
+    serve(node_id, members)
+
+#Code for running locally
+'''if __name__ == "__main__":
     node_id = input("Enter node ID: ")
     members = ["localhost:50051", "localhost:50052", "localhost:50053"]  # Replace with actual addresses as needed
-    serve(node_id, members)
+    serve(node_id, members)'''
