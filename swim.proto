@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package swim;
+
+// Message for pinging nodes
+message PingRequest {
+    string sender_id = 1;
+    string target_id = 2;
+}
+
+message PingResponse {
+    bool is_alive = 1;
+}
+
+// Message for indirect probes
+message IndirectPingRequest {
+    string requester_id = 1;
+    string target_id = 2;
+    repeated string proxy_nodes = 3;
+}
+
+message IndirectPingResponse {
+    bool success = 1;
+}
+
+// Message for failure notification
+message FailureNotification {
+    string failed_node_id = 1;
+}
+
+// gRPC service definition
+service FailureDetector {
+    rpc Ping(PingRequest) returns (PingResponse);
+    rpc IndirectPing(IndirectPingRequest) returns (IndirectPingResponse);
+}
