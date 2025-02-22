@@ -1,24 +1,28 @@
-# failure-detector
- 
-python -m venv venv
-source venv/bin/activate
-pip install grpcio grpcio-tools
-python -m grpc_tools.protoc -I. --python_out=./pyserver --grpc_python_out=./pyserver swim.proto
-
 # Failure Detector - SWIM Protocol Implementation
 
-This project implements a simple failure detection component of the SWIM protocol using gRPC in Python. It uses both direct and indirect pings to detect failures among nodes in a distributed system.
+This project implements a SWIM-based distributed system with two main components:
+
+1. **Failure Detector (Python):**  
+   - Periodically sends a **Ping** to a random node.
+   - If no response is received, it attempts an **IndirectPing** via k proxy nodes.
+   - If all probes fail, the node is marked as failed and a dissemination notification is sent.
+
+2. **Dissemination Service (Go):**  
+   - When a node failure is detected, a dissemination message is broadcasted (via gRPC) to all nodes.
+   - When a new node joins, it sends a **Join** request to a bootstrap node, which responds with the current membership list.
+   - Upon receiving a dissemination message, each node updates its membership list to stop pinging the failed node.
+
+Both components communicate via gRPC using a shared proto file (`swim.proto`).
 
 ## Table of Contents
 
-- [Overview](#overview)
 - [Project Structure](#project-structure)
 - [Prerequisites](#prerequisites)
 - [Setup & Local Testing](#setup--local-testing)
-  - [1. Virtual Environment Setup](#1-virtual-environment-setup)
+  - [1. Virtual Environment Setup (Python)](#1-virtual-environment-setup-python)
   - [2. Install Dependencies](#2-install-dependencies)
   - [3. Generate gRPC Stubs](#3-generate-grpc-stubs)
-  - [4. Running Locally](#4-running-locally)
+  - [4. Running Locally (5 Nodes)](#4-running-locally-5-nodes)
 - [Containerization](#containerization)
   - [1. Dockerfile](#1-dockerfile)
   - [2. Running Containers Manually](#2-running-containers-manually)
@@ -71,9 +75,26 @@ Make sure your swim.proto file is in the root directory. Run the following comma
 
 This will create swim_pb2.py and swim_pb2_grpc.py inside the pyserver/ directory.
 
+Ensure you have installed the Go plugins:
+
+`go install google.golang.org/protobuf/cmd/protoc-gen-go@latest`
+`go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest`
+
+Also, verify that your $GOPATH/bin is in your PATH.
+
+Then run the following command (adjust the output directory if needed):
+
+`protoc --go_out=./go-diss/proto --go-grpc_out=./go-diss/proto swim.proto`
+
+This generates swim.pb.go and swim_grpc.pb.go inside the go-diss/proto directory.
+
 ### 4. Running Locally
 
-You can test the failure detector locally by running multiple instances in separate terminal windows. For example, to run three nodes:
+You can test the system locally by running 5 separate instances. Each node uses:
+
+Python Failure Detector listening on port 50050 + NODE_ID (e.g., node1 on 50051)
+Go Dissemination service listening on port 50060 + NODE_ID (e.g., node1 on 50061)
+For local testing, update the MEMBERS list to use localhost.
 
 `python pyserver/failure_detector.py`
     
@@ -86,6 +107,24 @@ The code uses a simple mechanism to bind ports as follows:
     
 
 Logs will display RPC calls (both client and server sides) as nodes ping one another.
+
+For local testing, update the MEMBERS list to use localhost.
+
+* Node 1:
+```
+export NODE_ID=1
+export MEMBERS="localhost:50051,localhost:50052,localhost:50053,localhost:50054,localhost:50055"
+python pyserver/failure_detector.py
+```
+
+* Node 2:
+
+* Node 3:
+
+* Node 4:
+
+* Node 5:
+
 
 ## Containerization
 
