@@ -160,7 +160,7 @@ Before using Docker Compose, you can create a Docker network and run each contai
     
 3.  For three nodes, run these commands in separate terminals:
     
-    * ```
+    ```
     docker run -it --rm \
     --name node1 \
     --network failure-network \
