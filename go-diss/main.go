@@ -7,7 +7,6 @@ import (
 	"net"
 	"os"
 	"strconv"
-	"strings"
 
 	"google.golang.org/grpc"
 
@@ -46,12 +45,13 @@ func main() {
 	if nodeID == "" {
 		log.Fatal("NODE_ID not set")
 	}
-	membersEnv := os.Getenv("MEMBERS")
-	if membersEnv == "" {
-		log.Fatal("MEMBERS not set")
-	}
+	//membership := []string{"node1:50061", "node2:50062", "node3:50063", "node4:50064", "node5:50065"}
+	membership := []string{"localhost:50061", "localhost:50062", "localhost:50063", "localhost:50064", "localhost:50065"}
+	//if membersEnv == "" {
+	//	log.Fatal("MEMBERS not set")
+	//}
 	// Expect MEMBERS as a comma-separated list, e.g., "node1:50061,node2:50062,node3:50063"
-	membership := strings.Split(membersEnv, ",")
+	//membership := strings.Split(membersEnv, ",")
 
 	// Compute the port for the Dissemination component.
 	// For example, use port 50060 + nodeID (if nodeID is numeric).

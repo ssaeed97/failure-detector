@@ -149,6 +149,6 @@ if __name__ == "__main__":
     if members_env:
         members = members_env.split(',')
     else:
-        members = ["localhost:50051", "localhost:50052", "localhost:50053"]
+        members = ["localhost:50051", "localhost:50052", "localhost:50053", "localhost:50054", "localhost:50055"]
     
     serve(node_id, members)
