@@ -6,7 +6,7 @@ from concurrent import futures
 import swim_pb2 as swim_pb2
 import swim_pb2_grpc as swim_pb2_grpc
 
-T_PRIME = 10 # Interval for pinging in seconds
+T_PRIME = 20 # Interval for pinging in seconds
 K = 3        # Number of indirect probe nodes
 
 def get_node_id_from_address(address):
@@ -156,6 +156,7 @@ if __name__ == "__main__":
     if members_env:
         members = members_env.split(',')
     else:
-        members = ["localhost:50051", "localhost:50052", "localhost:50053", "localhost:50054", "localhost:50055"]
-    
+        #members = ["localhost:50051", "localhost:50052", "localhost:50053", "localhost:50054", "localhost:50055"]
+        members = ["node1:50051","node2:50052","node3:50053","node4:50054","node5:50055"]
+
     serve(node_id, members)

@@ -45,8 +45,8 @@ func main() {
 	if nodeID == "" {
 		log.Fatal("NODE_ID not set")
 	}
-	//membership := []string{"node1:50061", "node2:50062", "node3:50063", "node4:50064", "node5:50065"}
-	membership := []string{"localhost:50061", "localhost:50062", "localhost:50063", "localhost:50064", "localhost:50065"}
+	membership := []string{"node1:50061", "node2:50062", "node3:50063", "node4:50064", "node5:50065"}
+	//membership := []string{"localhost:50061", "localhost:50062", "localhost:50063", "localhost:50064", "localhost:50065"}
 	//if membersEnv == "" {
 	//	log.Fatal("MEMBERS not set")
 	//}
