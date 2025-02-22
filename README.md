@@ -160,6 +160,7 @@ Before using Docker Compose, you can create a Docker network and run each contai
     
 3.  For three nodes, run these commands in separate terminals:
     
+    * Node 1
     ```
     docker run -it --rm \
     --name node1 \
@@ -169,10 +170,48 @@ Before using Docker Compose, you can create a Docker network and run each contai
     -p 50051:50051 -p 50061:50061 \
     failure-detector
     ```   
-        
-    *   `docker run -it --name node2  --network failure-network  -p 50052:50052  -e NODE_ID=2  -e MEMBERS="node1:50051,node2:50052,node3:50053"  failure-detector`
-        
-    *   `docker run -it  --name node3  --network failure-network  -p 50053:50053  -e NODE_ID=3  -e MEMBERS="node1:50051,node2:50052,node3:50053"  failure-detector`
+    * Node 2:
+    ```
+    docker run -it --rm \
+    --name node2 \
+    --network failure-network \
+    -e NODE_ID=2 \
+    -e MEMBERS="node1:50051,node2:50052,node3:50053,node4:50054,node5:50055" \
+    -p 50052:50052 -p 50062:50062 \
+    failure-detector
+    ```
+
+    * Node 3:
+    ```
+    docker run -it --rm \
+    --name node3 \
+    --network failure-network \
+    -e NODE_ID=3 \
+    -e MEMBERS="node1:50051,node2:50052,node3:50053,node4:50054,node5:50055" \
+    -p 50053:50053 -p 50063:50063 \
+    failure-detector
+    ```
+    * Node 4:
+    ```
+    docker run -it --rm \
+    --name node4 \
+    --network failure-network \
+    -e NODE_ID=4 \
+    -e MEMBERS="node1:50051,node2:50052,node3:50053,node4:50054,node5:50055" \
+    -p 50054:50054 -p 50064:50064 \
+    failure-detector
+    ```
+    * Node 5:
+    ```
+    docker run -it --rm \
+    --name node5 \
+    --network failure-network \
+    -e NODE_ID=5 \
+    -e MEMBERS="node1:50051,node2:50052,node3:50053,node4:50054,node5:50055" \
+    -p 50055:50055 -p 50065:50065 \
+    failure-detector
+    ```
+ 
         
 
 You should see interactive outputs from each container, showing the RPC messages as nodes ping each other.
