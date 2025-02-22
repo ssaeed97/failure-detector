@@ -51,9 +51,7 @@ We test the implementation using a simple pyserver which is located in the subdi
 
 Open your terminal in the project root and run:
 
-```bash
-python -m venv venv
-```
+`python -m venv venv`
 
 ### Activate the VENV
 
@@ -63,7 +61,7 @@ python -m venv venv
 
 With the virtual environment activated, install the required packages:
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   bashCopypip install grpcio grpcio-tools   `
+`pip install grpcio grpcio-tools  `
 
 ### 3. Generate gRPC Stubs
 
