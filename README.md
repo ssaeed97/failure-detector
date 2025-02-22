@@ -162,13 +162,13 @@ Before using Docker Compose, you can create a Docker network and run each contai
     
     * ```
     docker run -it --rm \
-  --name node1 \
-  --network failure-network \
-  -e NODE_ID=1 \
-  -e MEMBERS="node1:50051,node2:50052,node3:50053,node4:50054,node5:50055" \
-  -p 50051:50051 -p 50061:50061 \
-  failure-detector
-        ```   
+    --name node1 \
+    --network failure-network \
+    -e NODE_ID=1 \
+    -e MEMBERS="node1:50051,node2:50052,node3:50053,node4:50054,node5:50055" \
+    -p 50051:50051 -p 50061:50061 \
+    failure-detector
+    ```   
         
     *   `docker run -it --name node2  --network failure-network  -p 50052:50052  -e NODE_ID=2  -e MEMBERS="node1:50051,node2:50052,node3:50053"  failure-detector`
         
