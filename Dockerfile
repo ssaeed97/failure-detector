@@ -1,17 +1,33 @@
 # Use an official Go image which includes Go and a minimal Linux environment.
-FROM golang:1.18
+FROM golang:1.22
 
 # Install Python3 and pip (for Debian-based images)
-RUN apt-get update && apt-get install -y python3 python3-pip
+# Install system dependencies including protoc
+RUN apt-get update && apt-get install -y \
+    python3 \
+    python3-pip \
+    build-essential \
+    python3-dev \
+    protobuf-compiler
+
 
 # Set the working directory.
 WORKDIR /app
 
 # Copy the entire project directory into the container.
 COPY . .
+RUN go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+RUN go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 
+RUN export PATH="$PATH:$(go env GOPATH)/bin"                  
+
+RUN protoc --go_out=./proto --go-grpc_out=./proto swim.proto
+
+RUN go mod init failure-detector
+RUN go mod tidy
 # Install Python dependencies.
-RUN pip3 install --no-cache-dir -r requirements.txt
+RUN pip3 install --no-cache-dir --break-system-packages -r requirements.txt
+
 
 # Expose the necessary ports.
 # Python Failure Detector listens on port 50050 + NODE_ID (e.g., 50051, 50052, etc.)
