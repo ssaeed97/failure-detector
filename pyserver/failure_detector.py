@@ -86,6 +86,7 @@ class FailureDetector(swim_pb2_grpc.FailureDetectorServicer):
                 except grpc.RpcError as e:
                     print(f"Error calling Dissemination service on node {member_node_id}: {e}")
         # Update local membership list after dissemination.
+        print(f"Removing following node {target} ")
         self.update_membership(target)
 
     def monitor_nodes(self):
