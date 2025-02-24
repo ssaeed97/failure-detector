@@ -159,7 +159,7 @@ Before using Docker Compose, you can create a Docker network and run each contai
     
 2.  `docker network create failure-network`
     
-3.  For three nodes, run these commands in separate terminals:
+3.  For five nodes, run these commands in separate terminals:
     
     * Node 1
     ```
@@ -169,7 +169,7 @@ Before using Docker Compose, you can create a Docker network and run each contai
     -e NODE_ID=1 \
     -e MEMBERS="node1:50051,node2:50052,node3:50053,node4:50054,node5:50055" \
     -p 50051:50051 -p 50061:50061 \
-    failure-detector
+    failure-detector-combined
     ```   
     * Node 2:
     ```
@@ -179,7 +179,7 @@ Before using Docker Compose, you can create a Docker network and run each contai
     -e NODE_ID=2 \
     -e MEMBERS="node1:50051,node2:50052,node3:50053,node4:50054,node5:50055" \
     -p 50052:50052 -p 50062:50062 \
-    failure-detector
+    failure-detector-combined
     ```
 
     * Node 3:
@@ -190,7 +190,7 @@ Before using Docker Compose, you can create a Docker network and run each contai
     -e NODE_ID=3 \
     -e MEMBERS="node1:50051,node2:50052,node3:50053,node4:50054,node5:50055" \
     -p 50053:50053 -p 50063:50063 \
-    failure-detector
+    failure-detector-combined
     ```
     * Node 4:
     ```
@@ -200,7 +200,7 @@ Before using Docker Compose, you can create a Docker network and run each contai
     -e NODE_ID=4 \
     -e MEMBERS="node1:50051,node2:50052,node3:50053,node4:50054,node5:50055" \
     -p 50054:50054 -p 50064:50064 \
-    failure-detector
+    failure-detector-combined
     ```
     * Node 5:
     ```
@@ -210,8 +210,24 @@ Before using Docker Compose, you can create a Docker network and run each contai
     -e NODE_ID=5 \
     -e MEMBERS="node1:50051,node2:50052,node3:50053,node4:50054,node5:50055" \
     -p 50055:50055 -p 50065:50065 \
-    failure-detector
+    failure-detector-combined
     ```
+
+4. When We want to test the join functionality, we try to run a new node on the same docker image within the same network, but not pass it the members list. We have a built in call within our startup script to call join_client.py to fetch the list from the disseminate servers and revert it to the new node.
+
+We use the following command to run the new node request:
+```
+  docker run -it --rm \
+  --name node6 \
+  --network failure-network \
+  -e NODE_ID=6 \
+  -e NEW_NODE_ID=6 \
+  -e NEW_NODE_ADDRESS="node6:50056" \
+  -e BOOTSTRAP_ADDRESS="node1:50061" \
+  -e BOOTSTRAP_NODE_ID=1 \
+  -p 50056:50056 -p 50066:50066 \
+  failure-detector-combined
+```
  
         
 
