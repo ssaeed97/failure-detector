@@ -26,7 +26,7 @@ if _version_not_supported:
 
 
 class FailureDetectorStub(object):
-    """gRPC service definition
+    """Existing FailureDetector service plus the new UpdateMembership RPC.
     """
 
     def __init__(self, channel):
@@ -45,10 +45,15 @@ class FailureDetectorStub(object):
                 request_serializer=swim__pb2.IndirectPingRequest.SerializeToString,
                 response_deserializer=swim__pb2.IndirectPingResponse.FromString,
                 _registered_method=True)
+        self.UpdateMembership = channel.unary_unary(
+                '/swim.FailureDetector/UpdateMembership',
+                request_serializer=swim__pb2.MembershipUpdateRequest.SerializeToString,
+                response_deserializer=swim__pb2.MembershipUpdateResponse.FromString,
+                _registered_method=True)
 
 
 class FailureDetectorServicer(object):
-    """gRPC service definition
+    """Existing FailureDetector service plus the new UpdateMembership RPC.
     """
 
     def Ping(self, request, context):
@@ -58,6 +63,12 @@ class FailureDetectorServicer(object):
         raise NotImplementedError('Method not implemented!')
 
     def IndirectPing(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def UpdateMembership(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -76,6 +87,11 @@ def add_FailureDetectorServicer_to_server(servicer, server):
                     request_deserializer=swim__pb2.IndirectPingRequest.FromString,
                     response_serializer=swim__pb2.IndirectPingResponse.SerializeToString,
             ),
+            'UpdateMembership': grpc.unary_unary_rpc_method_handler(
+                    servicer.UpdateMembership,
+                    request_deserializer=swim__pb2.MembershipUpdateRequest.FromString,
+                    response_serializer=swim__pb2.MembershipUpdateResponse.SerializeToString,
+            ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
             'swim.FailureDetector', rpc_method_handlers)
@@ -85,7 +101,7 @@ def add_FailureDetectorServicer_to_server(servicer, server):
 
  # This class is part of an EXPERIMENTAL API.
 class FailureDetector(object):
-    """gRPC service definition
+    """Existing FailureDetector service plus the new UpdateMembership RPC.
     """
 
     @staticmethod
@@ -142,6 +158,33 @@ class FailureDetector(object):
             metadata,
             _registered_method=True)
 
+    @staticmethod
+    def UpdateMembership(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/swim.FailureDetector/UpdateMembership',
+            swim__pb2.MembershipUpdateRequest.SerializeToString,
+            swim__pb2.MembershipUpdateResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
 
 class DisseminationStub(object):
     """Missing associated documentation comment in .proto file."""
@@ -168,15 +211,13 @@ class DisseminationServicer(object):
     """Missing associated documentation comment in .proto file."""
 
     def Disseminate(self, request, context):
-        """When a failure is detected, this RPC multicasts the info
-        """
+        """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
     def Join(self, request, context):
-        """New node join process
-        """
+        """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')

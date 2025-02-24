@@ -19,18 +19,20 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	FailureDetector_Ping_FullMethodName         = "/swim.FailureDetector/Ping"
-	FailureDetector_IndirectPing_FullMethodName = "/swim.FailureDetector/IndirectPing"
+	FailureDetector_Ping_FullMethodName             = "/swim.FailureDetector/Ping"
+	FailureDetector_IndirectPing_FullMethodName     = "/swim.FailureDetector/IndirectPing"
+	FailureDetector_UpdateMembership_FullMethodName = "/swim.FailureDetector/UpdateMembership"
 )
 
 // FailureDetectorClient is the client API for FailureDetector service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
-// gRPC service definition
+// Existing FailureDetector service plus the new UpdateMembership RPC.
 type FailureDetectorClient interface {
 	Ping(ctx context.Context, in *PingRequest, opts ...grpc.CallOption) (*PingResponse, error)
 	IndirectPing(ctx context.Context, in *IndirectPingRequest, opts ...grpc.CallOption) (*IndirectPingResponse, error)
+	UpdateMembership(ctx context.Context, in *MembershipUpdateRequest, opts ...grpc.CallOption) (*MembershipUpdateResponse, error)
 }
 
 type failureDetectorClient struct {
@@ -61,14 +63,25 @@ func (c *failureDetectorClient) IndirectPing(ctx context.Context, in *IndirectPi
 	return out, nil
 }
 
+func (c *failureDetectorClient) UpdateMembership(ctx context.Context, in *MembershipUpdateRequest, opts ...grpc.CallOption) (*MembershipUpdateResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(MembershipUpdateResponse)
+	err := c.cc.Invoke(ctx, FailureDetector_UpdateMembership_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // FailureDetectorServer is the server API for FailureDetector service.
 // All implementations must embed UnimplementedFailureDetectorServer
 // for forward compatibility.
 //
-// gRPC service definition
+// Existing FailureDetector service plus the new UpdateMembership RPC.
 type FailureDetectorServer interface {
 	Ping(context.Context, *PingRequest) (*PingResponse, error)
 	IndirectPing(context.Context, *IndirectPingRequest) (*IndirectPingResponse, error)
+	UpdateMembership(context.Context, *MembershipUpdateRequest) (*MembershipUpdateResponse, error)
 	mustEmbedUnimplementedFailureDetectorServer()
 }
 
@@ -84,6 +97,9 @@ func (UnimplementedFailureDetectorServer) Ping(context.Context, *PingRequest) (*
 }
 func (UnimplementedFailureDetectorServer) IndirectPing(context.Context, *IndirectPingRequest) (*IndirectPingResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method IndirectPing not implemented")
+}
+func (UnimplementedFailureDetectorServer) UpdateMembership(context.Context, *MembershipUpdateRequest) (*MembershipUpdateResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateMembership not implemented")
 }
 func (UnimplementedFailureDetectorServer) mustEmbedUnimplementedFailureDetectorServer() {}
 func (UnimplementedFailureDetectorServer) testEmbeddedByValue()                         {}
@@ -142,6 +158,24 @@ func _FailureDetector_IndirectPing_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _FailureDetector_UpdateMembership_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MembershipUpdateRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FailureDetectorServer).UpdateMembership(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FailureDetector_UpdateMembership_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FailureDetectorServer).UpdateMembership(ctx, req.(*MembershipUpdateRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // FailureDetector_ServiceDesc is the grpc.ServiceDesc for FailureDetector service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -157,6 +191,10 @@ var FailureDetector_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "IndirectPing",
 			Handler:    _FailureDetector_IndirectPing_Handler,
 		},
+		{
+			MethodName: "UpdateMembership",
+			Handler:    _FailureDetector_UpdateMembership_Handler,
+		},
 	},
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "swim.proto",
@@ -171,9 +209,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type DisseminationClient interface {
-	// When a failure is detected, this RPC multicasts the info
 	Disseminate(ctx context.Context, in *DisseminationRequest, opts ...grpc.CallOption) (*DisseminationResponse, error)
-	// New node join process
 	Join(ctx context.Context, in *JoinRequest, opts ...grpc.CallOption) (*JoinResponse, error)
 }
 
@@ -209,9 +245,7 @@ func (c *disseminationClient) Join(ctx context.Context, in *JoinRequest, opts ..
 // All implementations must embed UnimplementedDisseminationServer
 // for forward compatibility.
 type DisseminationServer interface {
-	// When a failure is detected, this RPC multicasts the info
 	Disseminate(context.Context, *DisseminationRequest) (*DisseminationResponse, error)
-	// New node join process
 	Join(context.Context, *JoinRequest) (*JoinResponse, error)
 	mustEmbedUnimplementedDisseminationServer()
 }

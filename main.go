@@ -2,16 +2,16 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net"
 	"os"
 	"strconv"
+	"strings"
 
 	"google.golang.org/grpc"
 
-	// Import the generated proto package.
-	// Adjust the import path based on the go_package option in your proto file.
 	pb "failure-detector/proto"
 )
 
@@ -19,23 +19,94 @@ import (
 type DisseminatorServer struct {
 	pb.UnimplementedDisseminationServer
 	nodeID     string
-	membership []string
+	membership []string // should contain failure detector addresses, e.g., "node1:50051"
+}
+
+// updateLocalFailureDetector updates the local Failure Detector's membership list.
+func updateLocalFailureDetector(failedNode, nodeID string) error {
+	// Calculate the failure detector's port: 50050 + nodeID.
+	intNodeID, err := strconv.Atoi(nodeID)
+	if err != nil {
+		return err
+	}
+	fdPort := 50050 + intNodeID
+	addr := fmt.Sprintf("localhost:%d", fdPort)
+
+	// Dial the local Failure Detector service.
+	conn, err := grpc.Dial(addr, grpc.WithInsecure())
+	if err != nil {
+		return fmt.Errorf("failed to dial local failure detector: %v", err)
+	}
+	defer conn.Close()
+
+	// Create a client for the FailureDetector service.
+	fdClient := pb.NewFailureDetectorClient(conn)
+	req := &pb.MembershipUpdateRequest{FailedNodeId: failedNode}
+	resp, err := fdClient.UpdateMembership(context.Background(), req)
+	if err != nil {
+		return fmt.Errorf("failed to update membership: %v", err)
+	}
+	if !resp.Success {
+		return errors.New("update membership RPC returned failure")
+	}
+	log.Printf("Local Failure Detector updated membership, removed %s", failedNode)
+	return nil
+}
+
+// updateRemoteFailureDetector updates a remote node's Failure Detector service.
+func updateRemoteFailureDetector(remoteAddr, failedNode string) error {
+	// remoteAddr should be something like "node2:50052" (the address of a remote Failure Detector)
+	conn, err := grpc.Dial(remoteAddr, grpc.WithInsecure())
+	if err != nil {
+		return fmt.Errorf("failed to dial remote failure detector at %s: %v", remoteAddr, err)
+	}
+	defer conn.Close()
+
+	client := pb.NewFailureDetectorClient(conn)
+	req := &pb.MembershipUpdateRequest{FailedNodeId: failedNode}
+	resp, err := client.UpdateMembership(context.Background(), req)
+	if err != nil {
+		return fmt.Errorf("failed to update remote membership at %s: %v", remoteAddr, err)
+	}
+	if !resp.Success {
+		return fmt.Errorf("remote update at %s returned failure", remoteAddr)
+	}
+	return nil
 }
 
 // Disseminate handles failure notifications.
 func (s *DisseminatorServer) Disseminate(ctx context.Context, req *pb.DisseminationRequest) (*pb.DisseminationResponse, error) {
-	// Server-side logging
-	log.Printf("\nComponent Dissemination of Node %s runs RPC Disseminate called by Component FailureDetector of Node %s", s.nodeID, req.SenderId)
-	// Process the failed node notification (e.g., update internal state)
+	// Server-side logging.
+	log.Printf("Component Dissemination of Node %s runs RPC Disseminate called by Component FailureDetector of Node %s", s.nodeID, req.SenderId)
 	fmt.Printf("Node %s detected failure of node %s\n", s.nodeID, req.FailedNodeId)
+
+	// Update the local Failure Detector's membership list.
+	if err := updateLocalFailureDetector(req.FailedNodeId, s.nodeID); err != nil {
+		log.Printf("Failed to update local failure detector: %v", err)
+	}
+
+	// Propagate the update to remote nodes.
+	for _, member := range s.membership {
+		// Skip self. Assuming member addresses are formatted like "nodeX:50051".
+		if strings.HasPrefix(member, fmt.Sprintf("node%s:", s.nodeID)) {
+			continue
+		}
+		err := updateRemoteFailureDetector(member, req.FailedNodeId)
+		if err != nil {
+			log.Printf("Failed to update remote failure detector at %s: %v", member, err)
+		} else {
+			log.Printf("Successfully updated remote failure detector at %s; removed %s", member, req.FailedNodeId)
+		}
+	}
+
 	return &pb.DisseminationResponse{Success: true}, nil
 }
 
 // Join handles join requests from new nodes.
 func (s *DisseminatorServer) Join(ctx context.Context, req *pb.JoinRequest) (*pb.JoinResponse, error) {
-	// Server-side logging
+	// Server-side logging.
 	log.Printf("Component Dissemination of Node %s runs RPC Join called by Component NewNode of Node %s", s.nodeID, req.NewNodeId)
-	// Respond with the current membership list
+	// Respond with the current membership list.
 	return &pb.JoinResponse{Membership: s.membership}, nil
 }
 
@@ -45,16 +116,12 @@ func main() {
 	if nodeID == "" {
 		log.Fatal("NODE_ID not set")
 	}
-	membership := []string{"node1:50061", "node2:50062", "node3:50063", "node4:50064", "node5:50065"}
-	//membership := []string{"localhost:50061", "localhost:50062", "localhost:50063", "localhost:50064", "localhost:50065"}
-	//if membersEnv == "" {
-	//	log.Fatal("MEMBERS not set")
-	//}
-	// Expect MEMBERS as a comma-separated list, e.g., "node1:50061,node2:50062,node3:50063"
-	//membership := strings.Split(membersEnv, ",")
+	// Set membership to the failure detector addresses.
+	// For example: "node1:50051", "node2:50052", ...
+	membership := []string{"node1:50051", "node2:50052", "node3:50053", "node4:50054", "node5:50055"}
 
-	// Compute the port for the Dissemination component.
-	// For example, use port 50060 + nodeID (if nodeID is numeric).
+	// Compute the port for the Dissemination service.
+	// Dissemination service listens on 50060 + nodeID.
 	intNodeID, err := strconv.Atoi(nodeID)
 	if err != nil {
 		log.Fatalf("Invalid NODE_ID: %v", err)
