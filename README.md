@@ -1,24 +1,28 @@
-# failure-detector
- 
-python -m venv venv
-source venv/bin/activate
-pip install grpcio grpcio-tools
-python -m grpc_tools.protoc -I. --python_out=./pyserver --grpc_python_out=./pyserver swim.proto
-
 # Failure Detector - SWIM Protocol Implementation
 
-This project implements a simple failure detection component of the SWIM protocol using gRPC in Python. It uses both direct and indirect pings to detect failures among nodes in a distributed system.
+This project implements a SWIM-based distributed system with two main components:
+
+1. **Failure Detector (Python):**  
+   - Periodically sends a **Ping** to a random node.
+   - If no response is received, it attempts an **IndirectPing** via k proxy nodes.
+   - If all probes fail, the node is marked as failed and a dissemination notification is sent.
+
+2. **Dissemination Service (Go):**  
+   - When a node failure is detected, a dissemination message is broadcasted (via gRPC) to all nodes.
+   - When a new node joins, it sends a **Join** request to a bootstrap node, which responds with the current membership list.
+   - Upon receiving a dissemination message, each node updates its membership list to stop pinging the failed node.
+
+Both components communicate via gRPC using a shared proto file (`swim.proto`).
 
 ## Table of Contents
 
-- [Overview](#overview)
 - [Project Structure](#project-structure)
 - [Prerequisites](#prerequisites)
 - [Setup & Local Testing](#setup--local-testing)
-  - [1. Virtual Environment Setup](#1-virtual-environment-setup)
+  - [1. Virtual Environment Setup (Python)](#1-virtual-environment-setup-python)
   - [2. Install Dependencies](#2-install-dependencies)
   - [3. Generate gRPC Stubs](#3-generate-grpc-stubs)
-  - [4. Running Locally](#4-running-locally)
+  - [4. Running Locally (5 Nodes)](#4-running-locally-5-nodes)
 - [Containerization](#containerization)
   - [1. Dockerfile](#1-dockerfile)
   - [2. Running Containers Manually](#2-running-containers-manually)
@@ -71,9 +75,27 @@ Make sure your swim.proto file is in the root directory. Run the following comma
 
 This will create swim_pb2.py and swim_pb2_grpc.py inside the pyserver/ directory.
 
+Ensure you have installed the Go plugins:
+
+`go install google.golang.org/protobuf/cmd/protoc-gen-go@latest`
+`go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest`
+`export PATH="$PATH:$(go env GOPATH)/bin" `
+
+Also, verify that your $GOPATH/bin is in your PATH.
+
+Then run the following command (adjust the output directory if needed):
+
+`protoc --go_out=./go-diss/proto --go-grpc_out=./go-diss/proto swim.proto`
+
+This generates swim.pb.go and swim_grpc.pb.go inside the go-diss/proto directory.
+
 ### 4. Running Locally
 
-You can test the failure detector locally by running multiple instances in separate terminal windows. For example, to run three nodes:
+You can test the system locally by running 5 separate instances. Each node uses:
+
+Python Failure Detector listening on port 50050 + NODE_ID (e.g., node1 on 50051)
+Go Dissemination service listening on port 50060 + NODE_ID (e.g., node1 on 50061)
+For local testing, update the MEMBERS list to use localhost.
 
 `python pyserver/failure_detector.py`
     
@@ -86,6 +108,41 @@ The code uses a simple mechanism to bind ports as follows:
     
 
 Logs will display RPC calls (both client and server sides) as nodes ping one another.
+
+For local testing, update the MEMBERS list to use localhost.
+
+* Node 1:
+```
+export NODE_ID=1
+export MEMBERS="localhost:50051,localhost:50052,localhost:50053,localhost:50054,localhost:50055"
+python pyserver/failure_detector.py
+```
+
+* Node 2:
+```
+export NODE_ID=2
+export MEMBERS="localhost:50051,localhost:50052,localhost:50053,localhost:50054,localhost:50055"
+python pyserver/failure_detector.py
+```
+
+* Node 3:
+```
+export NODE_ID=3
+export MEMBERS="localhost:50051,localhost:50052,localhost:50053,localhost:50054,localhost:50055"
+python pyserver/failure_detector.py
+```
+* Node 4:
+```
+export NODE_ID=4
+export MEMBERS="localhost:50051,localhost:50052,localhost:50053,localhost:50054,localhost:50055"
+python pyserver/failure_detector.py
+```
+* Node 5:
+```
+export NODE_ID=5
+export MEMBERS="localhost:50051,localhost:50052,localhost:50053,localhost:50054,localhost:50055"
+python pyserver/failure_detector.py
+```
 
 ## Containerization
 
@@ -102,13 +159,76 @@ Before using Docker Compose, you can create a Docker network and run each contai
     
 2.  `docker network create failure-network`
     
-3.  For three nodes, run these commands in separate terminals:
+3.  For five nodes, run these commands in separate terminals:
     
-    *   `docker run -it --name node1 --network failure-network -p 50051:50051 -e NODE_ID=1 -e MEMBERS="node1:50051,node2:50052,node3:50053" failure-detector`
-        
-    *   `docker run -it --name node2  --network failure-network  -p 50052:50052  -e NODE_ID=2  -e MEMBERS="node1:50051,node2:50052,node3:50053"  failure-detector`
-        
-    *   `docker run -it  --name node3  --network failure-network  -p 50053:50053  -e NODE_ID=3  -e MEMBERS="node1:50051,node2:50052,node3:50053"  failure-detector`
+    * Node 1
+    ```
+    docker run -it --rm \
+    --name node1 \
+    --network failure-network \
+    -e NODE_ID=1 \
+    -e MEMBERS="node1:50051,node2:50052,node3:50053,node4:50054,node5:50055" \
+    -p 50051:50051 -p 50061:50061 \
+    failure-detector-combined
+    ```   
+    * Node 2:
+    ```
+    docker run -it --rm \
+    --name node2 \
+    --network failure-network \
+    -e NODE_ID=2 \
+    -e MEMBERS="node1:50051,node2:50052,node3:50053,node4:50054,node5:50055" \
+    -p 50052:50052 -p 50062:50062 \
+    failure-detector-combined
+    ```
+
+    * Node 3:
+    ```
+    docker run -it --rm \
+    --name node3 \
+    --network failure-network \
+    -e NODE_ID=3 \
+    -e MEMBERS="node1:50051,node2:50052,node3:50053,node4:50054,node5:50055" \
+    -p 50053:50053 -p 50063:50063 \
+    failure-detector-combined
+    ```
+    * Node 4:
+    ```
+    docker run -it --rm \
+    --name node4 \
+    --network failure-network \
+    -e NODE_ID=4 \
+    -e MEMBERS="node1:50051,node2:50052,node3:50053,node4:50054,node5:50055" \
+    -p 50054:50054 -p 50064:50064 \
+    failure-detector-combined
+    ```
+    * Node 5:
+    ```
+    docker run -it --rm \
+    --name node5 \
+    --network failure-network \
+    -e NODE_ID=5 \
+    -e MEMBERS="node1:50051,node2:50052,node3:50053,node4:50054,node5:50055" \
+    -p 50055:50055 -p 50065:50065 \
+    failure-detector-combined
+    ```
+
+4. When We want to test the join functionality, we try to run a new node on the same docker image within the same network, but not pass it the members list. We have a built in call within our startup script to call join_client.py to fetch the list from the disseminate servers and revert it to the new node.
+
+We use the following command to run the new node request:
+```
+  docker run -it --rm \
+  --name node6 \
+  --network failure-network \
+  -e NODE_ID=6 \
+  -e NEW_NODE_ID=6 \
+  -e NEW_NODE_ADDRESS="node6:50056" \
+  -e BOOTSTRAP_ADDRESS="node1:50061" \
+  -e BOOTSTRAP_NODE_ID=1 \
+  -p 50056:50056 -p 50066:50066 \
+  failure-detector-combined
+```
+ 
         
 
 You should see interactive outputs from each container, showing the RPC messages as nodes ping each other.

@@ -1,8 +1,10 @@
 syntax = "proto3";
 
 package swim;
+
 option go_package = "./;swim";
-// Message for pinging nodes
+
+// Existing messages
 message PingRequest {
     string sender_id = 1;
     string target_id = 2;
@@ -12,7 +14,6 @@ message PingResponse {
     bool is_alive = 1;
 }
 
-// Message for indirect probes
 message IndirectPingRequest {
     string requester_id = 1;
     string target_id = 2;
@@ -23,23 +24,15 @@ message IndirectPingResponse {
     bool success = 1;
 }
 
-// Message for failure notification
-message FailureNotification {
-    string failed_node_id = 1;
-}
-// New messages for Dissemination Component
-
-// Dissemination RPC: multicasts failure information
 message DisseminationRequest {
-    string sender_id = 1;       // The node that detected the failure
-    string failed_node_id = 2;  // The node that failed
+    string sender_id = 1;
+    string failed_node_id = 2;
 }
 
 message DisseminationResponse {
     bool success = 1;
 }
 
-// Join RPC: new node requests membership info
 message JoinRequest {
     string new_node_id = 1;
     string new_node_address = 2;
@@ -49,17 +42,23 @@ message JoinResponse {
     repeated string membership = 1;
 }
 
+// New messages for membership update
+message MembershipUpdateRequest {
+    string failed_node_id = 1;
+}
 
-// gRPC service definition
+message MembershipUpdateResponse {
+    bool success = 1;
+}
+
+// Existing FailureDetector service plus the new UpdateMembership RPC.
 service FailureDetector {
     rpc Ping(PingRequest) returns (PingResponse);
     rpc IndirectPing(IndirectPingRequest) returns (IndirectPingResponse);
+    rpc UpdateMembership(MembershipUpdateRequest) returns (MembershipUpdateResponse);
 }
 
 service Dissemination {
-    // When a failure is detected, this RPC multicasts the info
     rpc Disseminate(DisseminationRequest) returns (DisseminationResponse);
-    
-    // New node join process
     rpc Join(JoinRequest) returns (JoinResponse);
 }

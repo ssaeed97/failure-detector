@@ -1,23 +1,43 @@
-# Use an official lightweight Python image.
-FROM python:3.8-slim
+# Use an official Go image which includes Go and a minimal Linux environment.
+FROM golang:1.22
 
-# Set the working directory inside the container.
+# Install Python3 and pip (for Debian-based images)
+# Install system dependencies including protoc
+RUN apt-get update && apt-get install -y \
+    python3 \
+    python3-pip \
+    build-essential \
+    python3-dev \
+    protobuf-compiler
+
+
+# Set the working directory.
 WORKDIR /app
 
-# Copy and install dependencies.
-COPY requirements.txt requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy the entire project.
+# Copy the entire project directory into the container.
 COPY . .
+RUN go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+RUN go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 
-# Optionally generate stubs if not already generated:
-# RUN python -m grpc_tools.protoc -I. --python_out=./pyserver --grpc_python_out=./pyserver swim.proto
+RUN export PATH="$PATH:$(go env GOPATH)/bin"                  
 
-# Set environment variables for non-interactive execution.
-# For instance, you could set default values here.
-ENV NODE_ID=1
-ENV MEMBERS="node1:50051,node2:50052,node3:50053,node4:50054,node5:50055"
+RUN protoc --go_out=./proto --go-grpc_out=./proto swim.proto
 
-# Run the failure detector server.
-CMD ["python", "pyserver/failure_detector.py"]
+RUN go mod init failure-detector
+RUN go mod tidy
+# Install Python dependencies.
+RUN pip3 install --no-cache-dir --break-system-packages -r requirements.txt
+
+
+# Expose the necessary ports.
+# Python Failure Detector listens on port 50050 + NODE_ID (e.g., 50051, 50052, etc.)
+# Go Dissemination service listens on port 50060 + NODE_ID (e.g., 50061, 50062, etc.)
+# (Expose a range or specific ports as needed.)
+EXPOSE 50051 50052 50053 50054 50055 50061 50062 50063 50064 50065
+
+# Use a startup script to launch both services.
+COPY start.sh .
+RUN chmod +x start.sh
+
+# Start the container by running the startup script.
+CMD ["./start.sh"]

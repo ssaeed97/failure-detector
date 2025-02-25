@@ -6,7 +6,7 @@ from concurrent import futures
 import swim_pb2 as swim_pb2
 import swim_pb2_grpc as swim_pb2_grpc
 
-T_PRIME = 10 # Interval for pinging in seconds
+T_PRIME = 20 # Interval for pinging in seconds
 K = 3        # Number of indirect probe nodes
 
 def get_node_id_from_address(address):
@@ -20,6 +20,11 @@ class FailureDetector(swim_pb2_grpc.FailureDetectorServicer):
         self.members = members  # List of nodes' addresses
         self.last_heard = {node: time.time() for node in members}
 
+    def update_membership(self, failed_node):
+        if failed_node in self.members:
+            self.members.remove(failed_node)
+            print(f"Membership updated: removed failed node {failed_node}. New membership: {self.members}")
+    
     def Ping(self, request, context):
         # Server-side logging for Ping RPC
         print(f"Component FailureDetector of Node {self.node_id} runs RPC Ping called by Component FailureDetector of Node {request.sender_id}")
@@ -80,6 +85,9 @@ class FailureDetector(swim_pb2_grpc.FailureDetectorServicer):
                         print(f"Dissemination to Node {member_node_id} failed for node {target}")
                 except grpc.RpcError as e:
                     print(f"Error calling Dissemination service on node {member_node_id}: {e}")
+        # Update local membership list after dissemination.
+        print(f"Removing following node {target} ")
+        self.update_membership(target)
 
     def monitor_nodes(self):
         while True:
@@ -149,6 +157,7 @@ if __name__ == "__main__":
     if members_env:
         members = members_env.split(',')
     else:
-        members = ["localhost:50051", "localhost:50052", "localhost:50053", "localhost:50054", "localhost:50055"]
-    
+        #members = ["localhost:50051", "localhost:50052", "localhost:50053", "localhost:50054", "localhost:50055"]
+        members = ["node1:50051","node2:50052","node3:50053","node4:50054","node5:50055"]
+
     serve(node_id, members)
